@@ -11,6 +11,9 @@ activity = "1.9.2"
 constraintlayout = "2.1.4"
 jspeedtest = "1.32.1"
 arthenica = "0.2.1"
+coroutines = "1.9.0"
+concurrent = "1.2.0"
+
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -23,6 +26,9 @@ androidx-activity = { group = "androidx.activity", name = "activity", version.re
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 jspeedtest = { group = "fr.bmartel", name = "jspeedtest", version.ref = "jspeedtest" }
 arthenica = { group = "com.arthenica", name = "smart-exception-java", version.ref = "arthenica" }
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+concurrent-futures = { group = "androidx.concurrent", name = "concurrent-futures-ktx", version.ref = "concurrent" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

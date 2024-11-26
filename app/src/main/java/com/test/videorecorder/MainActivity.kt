@@ -29,6 +29,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.test.videorecorder.databinding.ActivityMainBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.IOException
 import java.util.concurrent.Executors
 
@@ -261,8 +264,69 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     private fun startRecording() {
+        if (isRecording) return
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                val surfaceTexture = binding.textureView.surfaceTexture ?: return@launch
+                surfaceTexture.setDefaultBufferSize(1920, 1080)
+                val previewSurface = Surface(surfaceTexture)
+                setUpMediaRecorder()
+                if (captureSession == null) {
+                    Log.e("VideoRecorder", "Capture session is not initialized yet.")
+                    return@launch
+                }
+                val mediaRecorderSurface = mediaRecorder!!.surface
+                val previewOutputConfig = OutputConfiguration(previewSurface)
+                val recorderOutputConfig = OutputConfiguration(mediaRecorderSurface)
+
+                val outputConfigs = listOf(previewOutputConfig, recorderOutputConfig)
+                val executor = Executors.newSingleThreadExecutor()
+                val sessionConfig = SessionConfiguration(
+                    SessionConfiguration.SESSION_REGULAR,
+                    outputConfigs,
+                    executor,
+                    object : CameraCaptureSession.StateCallback() {
+                        override fun onConfigured(session: CameraCaptureSession) {
+                            captureSession = session
+                            try {
+                                val captureRequestBuilder =
+                                    cameraDevice?.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
+                                        ?.apply {
+                                            addTarget(previewSurface)
+                                            addTarget(mediaRecorderSurface)
+                                        }
+                                captureSession?.setRepeatingRequest(
+                                    captureRequestBuilder?.build()!!,
+                                    null,
+                                    null
+                                )
+                                mediaRecorder?.start()
+                                isRecording = true
+                                Log.d("VideoRecorder", "Recording started.")
+                            } catch (e: CameraAccessException) {
+                                e.printStackTrace()
+                            }
+                        }
+
+                        override fun onConfigureFailed(session: CameraCaptureSession) {
+                            Log.e(
+                                "VideoRecorder",
+                                "Failed to configure capture session for recording."
+                            )
+                        }
+                    }
+                )
+                cameraDevice?.createCaptureSession(sessionConfig)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(this@MainActivity, "Error starting recording", Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+    }
+
+    /*private fun startRecording() {
         try {
             val surfaceTexture = binding.textureView.surfaceTexture ?: return
             surfaceTexture.setDefaultBufferSize(1920, 1080)
@@ -307,14 +371,16 @@ class MainActivity : AppCompatActivity() {
                 }
             )
 
-            cameraDevice?.createCaptureSession(sessionConfig)
+            CoroutineScope(Dispatchers.IO).launch {
+                cameraDevice?.createCaptureSession(sessionConfig)
+            }
         } catch (e: CameraAccessException) {
             e.printStackTrace()
         } catch (e: IllegalStateException) {
             e.printStackTrace()
             Toast.makeText(this, "Error starting recording", Toast.LENGTH_SHORT).show()
         }
-    }
+    }*/
 
     private fun stopRecording() {
         if (isRecording) {
